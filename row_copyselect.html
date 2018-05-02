@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>資料選擇</title>
+        <script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
+		<script>var $ = jQuery = module.exports;</script>
+		<link href="css/sp_effect.css" rel="stylesheet" type="text/css">
+		<link href="css/alertify.css" rel="stylesheet" type="text/css">
+		<link href="css/themes/default.css" rel="stylesheet" type="text/css">
+		<link href="css/multi-select.css" media="screen" rel="stylesheet" type="text/css">
+		<link href="css/button.css" rel="stylesheet" type="text/css">
+    </head>
+    
+    <body style="overflow: hidden;">
+		<select multiple="multiple" id="column-select" name="column-select[]">
+		  
+		</select>
+		
+		
+    </body>
+		<script type="text/javascript" src="js/jquery.multi-select.js"></script>
+		<script type="text/javascript" src="js/alertify.js"></script>
+		<script type="text/javascript">
+			require('./renderer.js');
+			const window_electron = require('electron').remote.getCurrentWindow();
+			var rpc = require('jayson');
+			var options = { 
+			  port: 7749
+			};
+			// Create a server object with options 
+			var rpc_client = rpc.client.http(options);
+			
+			function sendrow()
+			{
+				alertify.message("文件處理中");
+				rpc_client.request("update_row",$("#column-select").val(),function(err, res){
+					if(err)
+					{
+						try
+						{
+							err = JSON.parse(err.message)
+							alertify.alert("ERROR "+err.error.code+": "+err.error.message);
+						}
+						catch(error)
+						{
+							alertify.alert(err.toString());
+						}
+					}
+					else
+					{
+						rpc_client.request("write_excel",null,function(err, res){
+							if(err)
+							{
+								try
+								{
+									err = JSON.parse(err.message)
+									alertify.alert("ERROR "+err.error.code+": "+err.error.message);
+								}
+								catch(error)
+								{
+									alertify.alert(err.toString());
+								}
+							}
+							else
+							{
+								alertify.alert(res.result,function(){
+											window_electron.close();
+										}
+								);
+							}
+						});
+					}
+				});
+			}
+			
+			function deselectall()
+			{
+				$('#column-select').multiSelect('deselect_all');
+			}
+			
+			function pastedata_to_selction(ele)
+			{
+				var data = $(ele).val().toUpperCase();
+				data = data.split("\n");
+				if(data.length == 1 && data[0] !== "")
+				{
+					data.push("");
+				}
+				var selected_val = $("#column-select").val().length;
+				var dupli_ele = []
+				var ms_span = $('.ms-selection li[style=""] span');
+				var ms_span_blinking = $('.ms-selection li[class*="blinking"] span');
+				for(var i=0;i<ms_span.length;i++)
+				{
+					if(data.indexOf($(ms_span[i]).text())>-1)
+					{
+						dupli_ele.push($(ms_span[i]).parent()[0]);
+					}
+				}
+				for(var i=0;i<ms_span_blinking.length;i++)
+				{
+					$($(ms_span_blinking[i]).parent()).removeClass("blinking");
+					if(data.indexOf($(ms_span_blinking[i]).text())>-1)
+					{
+						dupli_ele.push($(ms_span_blinking[i]).parent()[0]);
+					}
+				}
+				if(dupli_ele.length !== 0)
+				{
+					$(dupli_ele).addClass("blinking");
+				}
+				$('#column-select').multiSelect('select', data);
+				$(ele).val("");
+				var diff = $("#column-select").val().length-selected_val;
+				if(diff > 0)
+				{
+					alertify.message("加入 "+diff+" 筆有效資料",3);
+				}
+				if(dupli_ele.length > 0)
+				{
+					alertify.warning("共 "+(data.length-1-diff)+" 筆重複資料",3);
+				}
+				if(data.length-1-diff-dupli_ele.length > 0)
+				{
+					alertify.error("忽略 "+(data.length-1-diff-dupli_ele.length)+" 筆無效資料",3);
+				}
+			}
+			rpc_client.request("read_row",null,function (err, res) {
+				if(err)
+				{
+					try
+					{
+						err = JSON.parse(err.message)
+						alertify.alert("ERROR "+err.error.code+": "+err.error.message);
+					}
+					catch(error)
+					{
+						alertify.alert(err.toString());
+					}
+				}
+				else
+				{
+					var x = res.result.data;
+					var ele = $("#column-select");
+					for(var i=0;i<x.length;i++)
+					{
+						ele.append($("<option value='"+x[i]+"'>"+x[i]+"</option>"));
+					}
+					$('#column-select').multiSelect({
+										selectableHeader: "<h2 style='margin:0px'>請從Excel複製貼上【"+res.result.row_name+"】資料</h2><textarea id='pastearea' cols='45' rows='100' style='position: absolute;z-index: 100;' oninput='pastedata_to_selction(this)'></textarea>",
+										selectionHeader:"<h2 style='margin:0px'>單擊可取消選擇</h2>",
+										selectionFooter: '<button class="btn btn--stripe" onclick="deselectall()">全不選</button><button class="btn btn--stripe" onclick="sendrow()">確認</button>',
+										afterDeselect: function(values){
+												var bliking = $('.ms-selection li[class*="blinking"][style="display: none;"]');
+												if(bliking.length>0)
+												{
+													bliking.removeClass("blinking");
+												}
+											}
+										});
+				}
+			  }
+			);
+		</script>
+</html>

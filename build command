@@ -1,0 +1,2 @@
+pyinstaller api.spec --distpath pyfuncdist
+"./node_modules\.bin\electron-packager" . --overwrite --ignore="pyfunc" --ignore="web_folder" --ignore="api.spec" --ignore="build command" --ignore="build"

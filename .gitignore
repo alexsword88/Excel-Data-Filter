@@ -1,0 +1,4 @@
+node_modules
+pyfuncdist
+build
+package-lock.json

@@ -1,0 +1,24 @@
+{
+  "name": "ExcelExporter",
+  "version": "0.0.1",
+  "description": "Can read the excel file and export something data you want",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "Python",
+    "Electron",
+    "JSONRPC",
+    "MSExcel"
+  ],
+  "author": "YJJJ",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^1.8.4",
+    "electron-packager": "^12.0.1"
+  },
+  "dependencies": {
+    "jayson": "^2.0.5"
+  }
+}

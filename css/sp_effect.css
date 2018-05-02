@@ -1,0 +1,23 @@
+@font-face{
+	font-family: "bkt";
+	src: url("../font/kaiu.ttf") format('truetype');
+}
+
+*{
+	font-family:bkt;
+	user-select: none;
+}
+
+@keyframes changebgcolor {
+  0%{background-color:"";color:"";}
+  50%{background-color:#BEEEEF;color:#000000;}
+  100%{background-color:"";color:"";}
+}
+
+.blinking {
+	//background-color:#BEEEEF;
+	animation-duration: 1s;
+	animation-name: changebgcolor;
+	animation-iteration-count: infinite;
+	animation-direction: reverse;
+}

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>表單生成</title>
+		<script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
+		<script>var $ = jQuery = module.exports;</script>
+		<link href="css/sp_effect.css" rel="stylesheet" type="text/css">
+		<link href="css/multi-select.css" media="screen" rel="stylesheet" type="text/css">
+		<link href="css/alertify.css" rel="stylesheet" type="text/css">
+		<link href="css/themes/default.css" rel="stylesheet" type="text/css">
+		<link href="css/list.css" rel="stylesheet" type="text/css">
+		<link href="css/button.css" rel="stylesheet" type="text/css">
+    </head>
+    
+    <body>
+		<div id="holder" style="text-align:center">
+			<h1>將文件拖曳到空白處</h1>
+		</div>
+		<div id="sheetdiv" style="display:none;">
+		<div class="wrapper typo">我要使用【<span id="filename"></span>】的
+		  <div class="list"><span class="placeholder">什麼？？？？？？？？</span>
+			<ul id="sheetname" class="list__ul" style="">
+			  
+			</ul>
+		  </div>
+		  工作表
+		</div><br/>
+		<button style="position:absolute;top: 0px;background-color:red;color:white" class="btn btn--stripe" onclick="returnback()">重新選擇文件</button>
+		<button id="comfirmbutton" style="margin: auto;float: none;display:none" class="btn btn--stripe" onclick="tocolumn()">確定</button>
+    </body>
+	<script type="text/javascript" src="js/alertify.js"></script>
+	<script type="text/javascript" src="js/list.js"></script>
+	<script type="text/javascript">
+		require('./renderer.js');
+		const window_electron = require('electron').remote.getCurrentWindow();
+		var rpc = require('jayson');
+ 
+		var options = {
+		  port: 7749
+		};
+		
+		var rpc_client = rpc.client.http(options);
+		function dropfn(e){
+			e.preventDefault();
+			e.stopPropagation();
+
+			for (let f of e.dataTransfer.files) {
+				rpc_client.request("read_sheetname",[f.path],function (err, res) {
+					if(err)
+					{
+						try
+						{
+							err = JSON.parse(err.message)
+							alertify.alert("ERROR "+err.error.code+": "+err.error.message);
+						}
+						catch(error)
+						{
+							alertify.alert(err.toString());
+						}
+					}
+					else
+					{
+						if(res.result.error)
+						{
+							alertify.alert(res.result.error);
+						}
+						else
+						{
+							var x = res.result.data;
+							var ele = $("#sheetname");
+							$("#sheetdiv").show();
+							$("#holder").hide();
+							$("#filename").text(res.result.filename);
+							var max = -1;
+							for(var i=0;i<x.length;i++)
+							{
+								ele.append($('<li><a href="">'+x[i]+'</a></li>'));
+								if(x[i].length>max)
+								{
+									max = x[i].length;
+								}
+							}
+							list_listenner();
+							window_electron.maximize();
+							$('.placeholder').text("?".repeat(max+2));
+							var width = $('.placeholder').width();
+							$('.placeholder').width(width+50);
+							$('.placeholder').text(" ".repeat(max+2));
+							document.removeEventListener('drop',dropfn);
+							document.addEventListener('drop',dropoverfn);
+						}
+					}
+				  }
+				);
+				break;
+			}
+		}
+		function dropoverfn(e){
+			e.preventDefault();
+			e.stopPropagation();
+			
+		}
+		document.addEventListener('drop', dropfn);
+		document.addEventListener('dragover', dropoverfn);
+		
+		function tocolumn()
+		{
+			rpc_client.request("update_sheetname",[$('.placeholder').text()],null,function (err, res) {
+				if(err)
+				{
+					try
+					{
+						err = JSON.parse(err.message)
+						alertify.alert("ERROR "+err.error.code+": "+err.error.message);
+					}
+					catch(error)
+					{
+						alertify.alert(err.toString());
+					}
+				}
+				else
+				{
+					alertify.alert("準備進入欄位選擇！",function(){
+								window.location = "./column.html";
+								});
+				}
+			  }
+			);
+		}
+		
+		function returnback()
+		{
+			window_electron.unmaximize();
+			window_electron.reload();
+		}
+
+	</script>
+</html>

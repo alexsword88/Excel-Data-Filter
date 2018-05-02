@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>資料選擇</title>
+        <script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
+		<script>var $ = jQuery = module.exports;</script>
+		<link href="css/sp_effect.css" rel="stylesheet" type="text/css">
+		<link href="css/alertify.css" rel="stylesheet" type="text/css">
+		<link href="css/themes/default.css" rel="stylesheet" type="text/css">
+		<link href="css/multi-select.css" media="screen" rel="stylesheet" type="text/css">
+		<link href="css/button.css" rel="stylesheet" type="text/css">
+    </head>
+    
+    <body>
+		<select multiple="multiple" id="column-select" name="column-select[]">
+		  
+		</select>
+		
+		
+    </body>
+		<script type="text/javascript" src="js/jquery.multi-select.js"></script>
+		<script type="text/javascript" src="js/alertify.js"></script>
+		<script type="text/javascript">
+			require('./renderer.js');
+			const window_electron = require('electron').remote.getCurrentWindow();
+			var rpc = require('jayson');
+	 
+			var options = { 
+			  port: 7749
+			};
+			 
+			// Create a server object with options 
+			var rpc_client = rpc.client.http(options);
+			
+			function sendrow()
+			{
+				alertify.message("文件處理中");
+				rpc_client.request("update_row",$("#column-select").val(),function(err, res){
+					if(err)
+					{
+						try
+						{
+							err = JSON.parse(err.message)
+							alertify.alert("ERROR "+err.error.code+": "+err.error.message);
+						}
+						catch(error)
+						{
+							alertify.alert(err.toString());
+						}
+					}
+					else
+					{
+						rpc_client.request("write_excel",null,function(err, res){
+							if(err)
+							{
+								try
+								{
+									err = JSON.parse(err.message)
+									alertify.alert("ERROR "+err.error.code+": "+err.error.message);
+								}
+								catch(error)
+								{
+									alertify.alert(err.toString());
+								}
+							}
+							else
+							{
+								alertify.alert(res.result,function(){
+											window_electron.close();
+										}
+								);
+							}
+						});
+					}
+				});
+			}
+			function selectall()
+			{
+				$('#column-select').multiSelect('select_all');
+			}
+			
+			function deselectall()
+			{
+				$('#column-select').multiSelect('deselect_all');
+			}
+			
+			rpc_client.request("read_row",null,function (err, res) {
+				if(err)
+				{
+					try
+					{
+						err = JSON.parse(err.message)
+						alertify.alert("ERROR "+err.error.code+": "+err.error.message);
+					}
+					catch(error)
+					{
+						alertify.alert(err.toString());
+					}
+				}
+				else
+				{
+					var x = res.result.data;
+					var ele = $("#column-select");
+					for(var i=0;i<x.length;i++)
+					{
+						ele.append($("<option value='"+x[i]+"'>"+x[i]+"</option>"));
+					}
+					$("#ms-column-select").find("*").css({userSelect: 'none'});
+					$('#column-select').multiSelect({
+										selectableHeader: "<h2 style='margin:0px'>未選擇欄位</h2>",
+										selectionHeader: "<h2 style='margin:0px'>已選擇欄位</h2>",
+										selectableFooter: '<button class="btn btn--stripe" onclick="selectall()">全選</button><button class="btn btn--stripe" onclick="deselectall()">全不選</button>',
+										selectionFooter: '<button class="btn btn--stripe" onclick="sendrow()">確認</button>'
+										});
+				}
+			  }
+			);
+		</script>
+</html>

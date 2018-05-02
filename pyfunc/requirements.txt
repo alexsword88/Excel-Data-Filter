@@ -1,0 +1,13 @@
+et-xmlfile==1.0.1
+funcsigs==1.0.2
+jdcal==1.4
+jsonrpcserver==3.5.3
+jsonschema==2.6.0
+numpy==1.14.2
+openpyxl==2.5.3
+pandas==0.22.0
+python-dateutil==2.7.2
+pytz==2018.4
+six==1.11.0
+Werkzeug==0.14.1
+xlrd==1.1.0
